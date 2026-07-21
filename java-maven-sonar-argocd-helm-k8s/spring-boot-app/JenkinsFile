@@ -45,36 +45,30 @@ pipeline {
       }
     }
     stage('Update Deployment File') {
-        sh '''
-    git config --global --add safe.directory /var/lib/jenkins/workspace/cicd-demo
+    environment {
+        GIT_REPO_NAME = "Jenkins-Argo-pipeliine"
+        GIT_USER_NAME = "HarshitManhas"
+    }
+    steps {
+        withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+            sh '''
+                git config --global --add safe.directory /var/lib/jenkins/workspace/cicd-demo
 
-    git config user.email "harshit.manhas.9@gmail.com"
-    git config user.name "HarshitManhas"
+                git config user.email "harshit.manhas.9@gmail.com"
+                git config user.name "HarshitManhas"
 
-    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+                sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
 
-    git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+                git status
 
-    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
-'''
-        environment {
-            GIT_REPO_NAME = "Jenkins-Argo-pipeliine"
-            GIT_USER_NAME = "HarshitManhas"
-        }
-        steps {
-            withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-                sh '''
-                    git config user.email "harshit.manhas.9@gmail.com"
-                    git config user.name "HarshitManhas"
-                    BUILD_NUMBER=${BUILD_NUMBER}
-                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-                    git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-                '''
-            }
+                git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+
+                git commit -m "Update deployment image to version ${BUILD_NUMBER}" || true
+
+                git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
+            '''
         }
     }
-  }
+}
+}
 }
